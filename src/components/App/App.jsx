@@ -1,9 +1,16 @@
 import React, { Component } from 'react';
-import { Searchbar, ImageGallery, LoadButton, Modal, Loader } from 'components';
+import {
+  Searchbar,
+  ImageGallery,
+  LoadButton,
+  Modal,
+  Loader,
+  Notification,
+  notify,
+} from 'components';
 import { fetchImages } from 'service';
 import { getProperData } from 'helpers';
 import { AppContainer } from './App.styled';
-import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.min.css';
 
 export class App extends Component {
@@ -35,7 +42,7 @@ export class App extends Component {
             totalHits: data.totalHits,
           });
         })
-        .catch(message => this.notify(message))
+        .catch(message => notify(message))
         .finally(() => this.setState({ showSpinner: false }));
 
       return;
@@ -79,18 +86,6 @@ export class App extends Component {
     this.setState({ query: [query], page: 1, imagesData: [] });
   };
 
-  notify = message => {
-    toast.info(message, {
-      position: 'top-right',
-      autoClose: 4000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
-  };
-
   render() {
     const {
       imagesData,
@@ -118,18 +113,7 @@ export class App extends Component {
           </Modal>
         ) : null}
 
-        <ToastContainer
-          position="top-right"
-          autoClose={4000}
-          hideProgressBar
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          style={{ top: 0 }}
-        />
+        <Notification />
       </AppContainer>
     );
   }
