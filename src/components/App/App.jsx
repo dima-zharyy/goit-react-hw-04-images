@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Searchbar,
   ImageGallery,
@@ -13,113 +13,81 @@ import { getProperData } from 'helpers';
 import { AppContainer } from './App.styled';
 import 'react-toastify/dist/ReactToastify.min.css';
 
-export class App extends Component {
-  state = {
-    query: [],
-    imagesData: [],
-    page: 1,
-    totalHits: 0,
-    largeImageData: {},
-    showModal: false,
-    showSpinner: false,
+export const App = () => {
+  const [query, setQuery] = useState([]);
+  const [imagesData, setImagesData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+  const [largeImageData, setLargeImageData] = useState({});
+  const [showModal, setShowModal] = useState(false);
+  const [showSpinner, setShowSpinner] = useState(false);
+
+  useEffect(() => {
+    if (!query[0]) {
+      return;
+    }
+
+    setShowSpinner(true);
+
+    fetchImages(query, page)
+      .then(data => {
+        if (data.totalHits === 0) {
+          return Promise.reject(`There is no result on query: ${query}`);
+        }
+        setImagesData(state => [...state, ...getProperData(data)]);
+        setTotalHits(data.totalHits);
+      })
+      .catch(message => notify(message))
+      .finally(() => setShowSpinner(false));
+  }, [query, page]);
+
+  const handleOpenModal = event => {
+    const { largeImageUrl } = event.target.dataset;
+    const tags = event.target.alt;
+
+    setLargeImageData({ largeImageUrl, tags });
+    setShowModal(state => !state);
   };
 
-  componentDidUpdate(prevProps, prevState) {
-    const { query: prevQuery, page: prevPage } = prevState;
-    const { query: nextQuery, page: nextPage } = this.state;
+  const handleCloseModal = () => {
+    setShowModal(state => !state);
+    setLargeImageData({});
+  };
 
-    if (nextQuery) {
+  const handleLoadClick = () => {
+    setPage(state => state + 1);
+  };
+
+  const handleSubmit = query => {
+    if (!query[0]) {
       notify('Please type at least one letter!');
       return;
     }
 
-    if (prevQuery !== nextQuery) {
-      this.setState({ showSpinner: true });
-
-      fetchImages(nextQuery, nextPage)
-        .then(data => {
-          if (data.totalHits === 0) {
-            return Promise.reject(`There is no result on query: ${nextQuery}`);
-          }
-
-          this.setState({
-            imagesData: getProperData(data),
-            totalHits: data.totalHits,
-          });
-        })
-        .catch(message => notify(message))
-        .finally(() => this.setState({ showSpinner: false }));
-
-      return;
-    }
-
-    if (prevPage !== nextPage) {
-      this.setState({ showSpinner: true });
-      fetchImages(nextQuery, nextPage)
-        .then(data =>
-          this.setState(prevState => ({
-            totalHits: data.totalHits,
-            imagesData: [...prevState.imagesData, ...getProperData(data)],
-          }))
-        )
-        .finally(() => this.setState({ showSpinner: false }));
-    }
-  }
-
-  handleOpenModal = event => {
-    const { largeImageUrl } = event.target.dataset;
-    const tags = event.target.alt;
-
-    this.setState(prevState => ({
-      showModal: !prevState.showModal,
-      largeImageData: { largeImageUrl, tags },
-    }));
+    setQuery(query);
+    setPage(1);
+    setImagesData([]);
   };
 
-  handleCloseModal = () => {
-    this.setState(prevState => ({
-      showModal: !prevState.showModal,
-      largeImageData: {},
-    }));
-  };
+  return (
+    <AppContainer>
+      <Searchbar onSubmit={handleSubmit} />
 
-  handleLoadClick = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
-  };
+      <ImageGallery onOpenModal={handleOpenModal} images={imagesData} />
 
-  handleSubmit = query => {
-    this.setState({ query: [query], page: 1, imagesData: [] });
-  };
+      {imagesData.length === 0 || imagesData.length === totalHits
+        ? null
+        : !showSpinner && <LoadButton onClick={handleLoadClick} />}
 
-  render() {
-    const {
-      imagesData,
-      totalHits,
-      showModal,
-      showSpinner,
-      largeImageData: { largeImageUrl, tags },
-    } = this.state;
+      {showSpinner && <Loader />}
 
-    return (
-      <AppContainer>
-        <Searchbar onSubmit={this.handleSubmit} />
+      {showModal ? (
+        <Modal onClose={handleCloseModal}>
+          <img src={largeImageData.largeImageUrl} alt={largeImageData.tags} />
+        </Modal>
+      ) : null}
 
-        <ImageGallery onOpenModal={this.handleOpenModal} images={imagesData} />
-
-        {imagesData.length === 0 || imagesData.length === totalHits
-          ? null
-          : !showSpinner && <LoadButton onClick={this.handleLoadClick} />}
-
-        {showSpinner && <Loader />}
-
-        {showModal ? (
-          <Modal onClose={this.handleCloseModal}>
-            <img src={largeImageUrl} alt={tags} />
-          </Modal>
-        ) : null}
-
-        <Notification />
-      </AppContainer>
-    );
-  }
-}
+      <Notification />
+    </AppContainer>
+  );
+};

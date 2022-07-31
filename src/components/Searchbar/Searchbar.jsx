@@ -10,7 +10,7 @@ export const Searchbar = ({ onSubmit }) => {
   const handleSubmit = event => {
     event.preventDefault();
 
-    onSubmit(query.trim());
+    onSubmit([query.toLowerCase().trim()]);
     setQuery('');
   };
 
