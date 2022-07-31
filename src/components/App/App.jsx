@@ -28,6 +28,11 @@ export class App extends Component {
     const { query: prevQuery, page: prevPage } = prevState;
     const { query: nextQuery, page: nextPage } = this.state;
 
+    if (nextQuery) {
+      notify('Please type at least one letter!');
+      return;
+    }
+
     if (prevQuery !== nextQuery) {
       this.setState({ showSpinner: true });
 

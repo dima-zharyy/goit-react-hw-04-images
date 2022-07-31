@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Notification, notify } from 'components';
 import { Header, Form, Button, Input } from './Searchbar.styled';
 import { ImSearch } from 'react-icons/im';
 import PropTypes from 'prop-types';
@@ -11,13 +10,7 @@ export const Searchbar = ({ onSubmit }) => {
   const handleSubmit = event => {
     event.preventDefault();
 
-    if (query.trim() === '') {
-      notify('Please type at least one letter!');
-      setQuery('');
-      return;
-    }
-
-    onSubmit(query);
+    onSubmit(query.trim());
     setQuery('');
   };
 
@@ -40,7 +33,6 @@ export const Searchbar = ({ onSubmit }) => {
           onChange={handleInputChange}
         />
       </Form>
-      <Notification />
     </Header>
   );
 };
